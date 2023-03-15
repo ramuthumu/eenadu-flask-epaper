@@ -5,28 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eenadu ePaper Viewer - Select Edition</title>
     <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
         .edition {
-            display: inline-block;
-            width: 150px;
             margin: 10px;
             text-align: center;
-            vertical-align: top;
         }
         .edition img {
             width: 100%;
             height: auto;
         }
+        h1 {
+            text-align: center;
+            color: cornflowerblue;
+        }
     </style>
 </head>
 <body>
-<h1>Select an Edition</h1>
-{% for edition in editions %}
-    <div class="edition">
-        <a href="/edition/{{ edition.editionID }}">
-            <img src="{{ edition.Path }}" alt="{{ edition.EditionName }}">
-            <h2>{{ edition.EditionName }}</h2>
-        </a>
-    </div>
-{% endfor %}
+<h1>Eenadu ePaper</h1>
+<div class="container">
+    {% for edition in editions %}
+        <div class="edition">
+            <a href="/edition/{{ edition.editionID }}">
+                <img src="{{ edition.Path }}" alt="{{ edition.EditionName }}">
+                <h3>{{ edition.EditionName }}</h3>
+            </a>
+        </div>
+    {% endfor %}
+</div>
 </body>
 </html>
