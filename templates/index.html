@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eenadu ePaper Viewer</title>
+    <style>
+        .container {
+            position: relative;
+            display: inline-block;
+        }
+        .image {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img src="{{ xhighres_image_url }}" alt="Page" class="image">
+    <img src="{{ overlay_image_url }}" alt="Overlay" class="overlay">
+</div>
+<form action="/" method="post">
+    <input type="hidden" name="current_page_index" value="{{ current_page_index }}">
+    {% if current_page_index > 0 %}
+        <button type="submit" name="previous">Previous</button>
+    {% endif %}
+    {% if current_page_index < total_pages - 1 %}
+        <button type="submit" name="next">Next</button>
+    {% endif %}
+</form>
+</body>
+</html>
