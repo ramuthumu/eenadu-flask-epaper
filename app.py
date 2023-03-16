@@ -49,6 +49,8 @@ def edition(edition_id):
             current_page_index = int(request.form['current_page_index']) + 1
         elif 'previous' in request.form:
             current_page_index = int(request.form['current_page_index']) - 1
+        elif 'go_to_page' in request.form:
+            current_page_index = int(request.form['page_select'])
 
     current_page_index = max(0, min(current_page_index, len(pages) - 1))
     current_page = pages[current_page_index]

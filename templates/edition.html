@@ -42,6 +42,14 @@
     <button type="submit" name="previous" {% if current_page_index == 0 %}disabled{% endif %}>&lt; Previous</button>
     <span>Page {{ current_page_index + 1 }} of {{ total_pages }}</span>
     <button type="submit" name="next" {% if current_page_index == total_pages - 1 %}disabled{% endif %}>Next &gt;</button>
+    <!-- Add a dropdown menu for page selection -->
+    <select name="page_select" id="pageSelect">
+        {% for i in range(total_pages) %}
+            <option value="{{ i }}" {% if i == current_page_index %}selected{% endif %}>Page {{ i + 1 }}</option>
+        {% endfor %}
+    </select>
+    <!-- Add a "Go to Page" button -->
+    <button type="submit" name="go_to_page">Go to Page</button>
 </form>
 <script>
     const current_page_index = {{ current_page_index }};
