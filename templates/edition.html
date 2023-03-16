@@ -37,12 +37,28 @@
     <img class="image" src="{{ xhighres_image_url }}" alt="ePaper page">
     <img class="overlay" src="{{ overlay_image_url }}" alt="ePaper overlay">
 </div>
-<form class="navigation" action="" method="POST">
+<form class="navigation" action="" method="POST" id="navForm">
     <input type="hidden" name="current_page_index" value="{{ current_page_index }}">
     <button type="submit" name="previous" {% if current_page_index == 0 %}disabled{% endif %}>&lt; Previous</button>
     <span>Page {{ current_page_index + 1 }} of {{ total_pages }}</span>
     <button type="submit" name="next" {% if current_page_index == total_pages - 1 %}disabled{% endif %}>Next &gt;</button>
 </form>
+<script>
+    const current_page_index = {{ current_page_index }};
+    const total_pages = {{ total_pages }};
+
+    document.addEventListener('keydown', function (event) {
+        const navForm = document.getElementById('navForm');
+        if (event.key === 'ArrowLeft') {
+            if (current_page_index > 0) {
+                navForm.querySelector('button[name="previous"]').click();
+            }
+        } else if (event.key === 'ArrowRight') {
+            if (current_page_index < total_pages - 1) {
+                navForm.querySelector('button[name="next"]').click();
+            }
+        }
+    });
+</script>
 </body>
 </html>
-
