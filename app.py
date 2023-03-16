@@ -1,20 +1,27 @@
 from flask import Flask, render_template, request
+from flask_caching import Cache
 import requests
 import json
 
 app = Flask(__name__)
 
+# Set up caching
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
+@cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_max_date():
     url = "https://epaper.eenadu.net/Home/GetMaxdateJson"
     response = requests.get(url)
     return response.text.strip('\"')
 
+@cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_pages(date, edition_id):
     url = f"https://epaper.eenadu.net/Home/GetAllpages?editionid={edition_id}&editiondate={date}&IsMag=0"
     response = requests.get(url)
     pages = json.loads(response.text)
     return sorted(pages, key=lambda x: int(x['PageNo']))
 
+@cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_editions(date):
     url = f"https://epaper.eenadu.net/Login/GetMailEditionPages?Date={date}"
     response = requests.get(url)
