@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eenadu ePaper Viewer - Select Edition</title>
+    <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .edition {
+            margin: 10px;
+            text-align: center;
+        }
+        .edition img {
+            width: 100%;
+            height: auto;
+        }
+        h1 {
+            text-align: center;
+            color: cornflowerblue;
+        }
+    </style>
+</head>
+<body>
+<h1>Eenadu ePaper</h1>
+<div class="container">
+    {% for edition in editions %}
+        <div class="edition">
+            <a href="/edition/{{ edition.editionID }}">
+                <img src="{{ edition.Path }}" alt="{{ edition.EditionName }}">
+                <h3>{{ edition.EditionName }}</h3>
+            </a>
+        </div>
+    {% endfor %}
+</div>
+</body>
+</html>
