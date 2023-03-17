@@ -8,11 +8,13 @@ app = Flask(__name__)
 # Set up caching
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
+
 @cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_max_date():
     url = "https://epaper.eenadu.net/Home/GetMaxdateJson"
     response = requests.get(url)
     return response.text.strip('\"')
+
 
 @cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_pages(date, edition_id):
@@ -21,6 +23,7 @@ def get_pages(date, edition_id):
     pages = json.loads(response.text)
     return sorted(pages, key=lambda x: int(x['PageNo']))
 
+
 @cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_editions(date):
     url = f"https://epaper.eenadu.net/Login/GetMailEditionPages?Date={date}"
@@ -28,11 +31,13 @@ def get_editions(date):
     editions = json.loads(response.text)
     return editions
 
+
 @app.route('/', methods=['GET'])
 def landing():
     max_date = get_max_date()
     editions = get_editions(max_date)
     return render_template('landing.html', editions=editions)
+
 
 @app.route('/edition/<int:edition_id>', methods=['GET', 'POST'])
 def edition(edition_id):
@@ -57,7 +62,9 @@ def edition(edition_id):
     xhighres_image_url = current_page['XHighResolution']
     overlay_image_url = xhighres_image_url.replace('.jpg', '.png')
 
-    return render_template('edition.html', overlay_image_url=overlay_image_url, xhighres_image_url=xhighres_image_url, current_page_index=current_page_index, total_pages=len(pages))
+    return render_template('edition.html', overlay_image_url=overlay_image_url, xhighres_image_url=xhighres_image_url,
+                           current_page_index=current_page_index, total_pages=len(pages))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
