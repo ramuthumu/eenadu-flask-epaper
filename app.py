@@ -2,11 +2,14 @@ from flask import Flask, render_template, request
 from flask_caching import Cache
 import requests
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 
 # Set up caching
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+app.config['CACHE_TYPE'] = 'filesystem'
+app.config['CACHE_DIR'] = 'cache_directory'
+cache = Cache(app)
 
 
 @cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
@@ -16,19 +19,28 @@ def get_max_date():
     return response.text.strip('\"')
 
 
+def fetch_data(url):
+    response = requests.get(url)
+    return json.loads(response.text)
+
+
 @cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_pages(date, edition_id):
     url = f"https://epaper.eenadu.net/Home/GetAllpages?editionid={edition_id}&editiondate={date}&IsMag=0"
-    response = requests.get(url)
-    pages = json.loads(response.text)
+
+    with ThreadPoolExecutor() as executor:
+        pages = executor.submit(fetch_data, url).result()
+
     return sorted(pages, key=lambda x: int(x['PageNo']))
 
 
 @cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
 def get_editions(date):
     url = f"https://epaper.eenadu.net/Login/GetMailEditionPages?Date={date}"
-    response = requests.get(url)
-    editions = json.loads(response.text)
+
+    with ThreadPoolExecutor() as executor:
+        editions = executor.submit(fetch_data, url).result()
+
     return editions
 
 
@@ -67,4 +79,4 @@ def edition(edition_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
