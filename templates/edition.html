@@ -44,8 +44,8 @@
     <button type="submit" name="next" {% if current_page_index == total_pages - 1 %}disabled{% endif %}>Next &gt;</button>
     <!-- Add a "Home" button -->
     <button type="button" onclick="location.href='/'">Home</button>
-    <label for="pageSelect">Select a page:</label>
-    <select name="page_select" id="pageSelect">
+    <label for="pageSelect" style="display: none;">Select a page:</label>
+    <select name="page_select" id="pageSelect" aria-label="Select a page">
         {% for i in range(total_pages) %}
             <option value="{{ i }}" {% if i == current_page_index %}selected{% endif %}>Page {{ i + 1 }}</option>
         {% endfor %}
