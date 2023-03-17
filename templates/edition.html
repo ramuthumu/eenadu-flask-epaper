@@ -42,13 +42,14 @@
     <button type="submit" name="previous" {% if current_page_index == 0 %}disabled{% endif %}>&lt; Previous</button>
     <span>Page {{ current_page_index + 1 }} of {{ total_pages }}</span>
     <button type="submit" name="next" {% if current_page_index == total_pages - 1 %}disabled{% endif %}>Next &gt;</button>
-    <!-- Add a dropdown menu for page selection -->
+    <!-- Add a "Home" button -->
+    <button type="button" onclick="location.href='/'">Home</button>
+    <label for="pageSelect">Select a page:</label>
     <select name="page_select" id="pageSelect">
         {% for i in range(total_pages) %}
             <option value="{{ i }}" {% if i == current_page_index %}selected{% endif %}>Page {{ i + 1 }}</option>
         {% endfor %}
     </select>
-    <!-- Add a "Go to Page" button -->
     <button type="submit" name="go_to_page">Go to Page</button>
 </form>
 <script>
@@ -67,6 +68,33 @@
             }
         }
     });
+
+    // Add touch gestures
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    function handleGesture() {
+        const navForm = document.getElementById('navForm');
+        if (touchEndX < touchStartX) { // Swipe left
+            if (current_page_index < total_pages - 1) {
+                navForm.querySelector('button[name="next"]').click();
+            }
+        }
+        if (touchEndX > touchStartX) { // Swipe right
+            if (current_page_index > 0) {
+                navForm.querySelector('button[name="previous"]').click();
+            }
+        }
+    }
+
+    document.addEventListener('touchstart', function (event) {
+        touchStartX = event.changedTouches[0].screenX;
+    }, false);
+
+    document.addEventListener('touchend', function (event) {
+        touchEndX = event.changedTouches[0].screenX;
+        handleGesture();
+    }, false);
 </script>
 </body>
 </html>
