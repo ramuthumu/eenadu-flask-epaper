@@ -48,7 +48,8 @@ def get_editions(date):
 def landing():
     max_date = get_max_date()
     editions = get_editions(max_date)
-    return render_template('landing.html', editions=editions)
+    editions_json = json.dumps(editions)
+    return render_template('landing.html', editions_json=editions_json)
 
 
 @app.route('/edition/<int:edition_id>', methods=['GET', 'POST'])

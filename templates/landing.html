@@ -6,14 +6,23 @@
     <title>Eenadu ePaper Viewer - Select Edition</title>
     <style>
         .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            justify-items: center;
             align-items: center;
+            padding: 20px;
         }
         .edition {
-            margin: 10px;
             text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .edition:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
         }
         .edition img {
             width: 100%;
@@ -22,20 +31,35 @@
         h1 {
             text-align: center;
             color: cornflowerblue;
+            margin-bottom: 20px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 </head>
 <body>
-<h1>Eenadu ePaper</h1>
-<div class="container">
-    {% for edition in editions %}
-        <div class="edition">
-            <a href="/edition/{{ edition.editionID }}">
-                <img src="{{ edition.Path }}" alt="{{ edition.EditionName }}">
+<div id="app">
+    <h1>Eenadu ePaper</h1>
+    <div class="container">
+        {% raw %}
+        <div class="edition" v-for="edition in editions">
+            <a :href="'/edition/' + edition.editionID">
+                <img :src="edition.Path" :alt="edition.EditionName">
                 <h3>{{ edition.EditionName }}</h3>
             </a>
         </div>
-    {% endfor %}
+        {% endraw %}
+    </div>
 </div>
+
+<script>
+    const editionsData = {{ editions_json|safe }};
+
+    new Vue({
+        el: '#app',
+        data: {
+            editions: editionsData
+        }
+    });
+</script>
 </body>
 </html>

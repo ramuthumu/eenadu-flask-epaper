@@ -93,6 +93,9 @@
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
+    const swipeThreshold = 75; // Add a swipe threshold
+    const delayThreshold = 200; // Add a delay threshold in milliseconds
+    let touchStartTime;
 
     function handleGesture() {
         const navForm = document.getElementById('navForm');
@@ -100,11 +103,11 @@
         const yDifference = touchEndY - touchStartY;
 
         if (Math.abs(xDifference) > Math.abs(yDifference)) {
-            if (xDifference < 0) { // Swipe left
+            if (xDifference < -swipeThreshold) { // Swipe left
                 if (current_page_index < total_pages - 1) {
                     navForm.querySelector('button[name="next"]').click();
                 }
-            } else if (xDifference > 0) { // Swipe right
+            } else if (xDifference > swipeThreshold) { // Swipe right
                 if (current_page_index > 0) {
                     navForm.querySelector('button[name="previous"]').click();
                 }
@@ -115,12 +118,18 @@
     document.addEventListener('touchstart', function (event) {
         touchStartX = event.changedTouches[0].screenX;
         touchStartY = event.changedTouches[0].screenY;
+        touchStartTime = new Date().getTime();
     }, false);
 
     document.addEventListener('touchend', function (event) {
         touchEndX = event.changedTouches[0].screenX;
         touchEndY = event.changedTouches[0].screenY;
-        handleGesture();
+        const touchEndTime = new Date().getTime();
+
+        // Check if the gesture duration is below the delay threshold
+        if (touchEndTime - touchStartTime <= delayThreshold) {
+            handleGesture();
+        }
     }, false);
 </script>
 </body>
