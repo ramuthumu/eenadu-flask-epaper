@@ -24,7 +24,8 @@ def fetch_data(url):
     return json.loads(response.text)
 
 
-@cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
+@cache.cached(timeout=60 * 60 * 24, cache_none=False,
+              key_prefix=lambda: f"pages_{request.args.get('date', '')}_{request.view_args['edition_id']}")
 def get_pages(date, edition_id):
     url = f"https://epaper.eenadu.net/Home/GetAllpages?editionid={edition_id}&editiondate={date}&IsMag=0"
 
@@ -34,7 +35,7 @@ def get_pages(date, edition_id):
     return sorted(pages, key=lambda x: int(x['PageNo']))
 
 
-@cache.memoize(60 * 60 * 24)  # Cache the results for 24 hours
+@cache.cached(timeout=60 * 60 * 24, cache_none=False, key_prefix=lambda: f"editions_{request.args.get('date', '')}")
 def get_editions(date):
     url = f"https://epaper.eenadu.net/Login/GetMailEditionPages?Date={date}"
 
