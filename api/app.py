@@ -15,10 +15,35 @@ def get_pages(date, edition_id):
     pages = json.loads(response.text)
     return sorted(pages, key=lambda x: int(x['PageNo']))
 
+def get_khammam_district_editions(date):
+    url = f"https://epaper.eenadu.net/Login/GetDistrictEditionPages?DistrictEditionId=1&Date={date}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        district_editions = json.loads(response.text)
+        # Find the Khammam edition in the district editions
+        khammam_edition = next((edition for edition in district_editions if edition["EditionName"] == "KHAMMAM"), None)
+        return khammam_edition
+    else:
+        print("Failed to fetch district editions")
+        return []
+
 def get_editions(date):
+    # Get the main editions
     url = f"https://epaper.eenadu.net/Login/GetMailEditionPages?Date={date}"
     response = requests.get(url)
-    editions = json.loads(response.text)
+    if response.status_code == 200:
+        editions = json.loads(response.text)
+    else:
+        print("Failed to fetch main editions")
+        return []
+    
+    # Get the district editions
+    khammam_edition = get_khammam_district_editions(date)
+    
+    # If Khammam edition is found, add it to the main editions list
+    if khammam_edition:
+        editions.append(khammam_edition)
+    
     return editions
 
 @app.route('/', methods=['GET'])

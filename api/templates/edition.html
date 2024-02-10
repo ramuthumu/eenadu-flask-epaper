@@ -30,6 +30,18 @@
             font-size: 1.2em;
             padding: 5px 10px;
         }
+
+        .navigation .home-button {
+            font-size: 1.2em;
+            padding: 5px 10px;
+            text-decoration: none;
+            color: black; /* Adjust color to match your design */
+            border: 1px solid black; /* Adjust border as needed */
+            background-color: white; /* Adjust background color as needed */
+            margin-right: 20px; /* Adds some space between the Home button and the Previous button */
+        }
+
+
     </style>
 </head>
 <body>
@@ -39,6 +51,7 @@
 </div>
 <form class="navigation" action="" method="POST" id="navForm">
     <input type="hidden" name="current_page_index" value="{{ current_page_index }}">
+    <a href="/" class="home-button">Home</a> <!-- Removed class since styles are now general -->
     <button type="submit" name="previous" {% if current_page_index == 0 %}disabled{% endif %}>&lt; Previous</button>
     <span>Page {{ current_page_index + 1 }} of {{ total_pages }}</span>
     <button type="submit" name="next" {% if current_page_index == total_pages - 1 %}disabled{% endif %}>Next &gt;</button>
