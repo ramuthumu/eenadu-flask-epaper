@@ -1,32 +1,58 @@
 from flask import Flask, render_template, request
+from flask_caching import Cache
 import requests
 import json
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 app = Flask(__name__)
 
+# Configure cache
+app.config['CACHE_TYPE'] = 'SimpleCache'  # Simple in-memory cache, suitable for single-state apps
+cache = Cache(app)
+cache.init_app(app)
+
+# Configure APScheduler
+scheduler = BackgroundScheduler()
+
+def clear_cache():
+    with app.app_context():
+        cache.clear()
+        print("Cache cleared.")
+
+# Schedule cache to be cleared every day at 5 PM and 6 PM
+scheduler.add_job(func=clear_cache, trigger='cron', hour='17,18')
+scheduler.start()
+
+# Ensure the scheduler is shut down when the app exits
+atexit.register(lambda: scheduler.shutdown())
+
+@cache.memoize(timeout=86400)  # Cache for one day
 def get_max_date():
     url = "https://epaper.eenadu.net/Home/GetMaxdateJson"
     response = requests.get(url)
     return response.text.strip('\"')
 
+@cache.memoize(timeout=86400)  # Cache for one day
 def get_pages(date, edition_id):
     url = f"https://epaper.eenadu.net/Home/GetAllpages?editionid={edition_id}&editiondate={date}&IsMag=0"
     response = requests.get(url)
     pages = json.loads(response.text)
     return sorted(pages, key=lambda x: int(x['PageNo']))
 
+@cache.memoize(timeout=86400)  # Cache for one day
 def get_khammam_district_editions(date):
     url = f"https://epaper.eenadu.net/Login/GetDistrictEditionPages?DistrictEditionId=1&Date={date}"
     response = requests.get(url)
     if response.status_code == 200:
         district_editions = json.loads(response.text)
-        # Find the Khammam edition in the district editions
         khammam_edition = next((edition for edition in district_editions if edition["EditionName"] == "KHAMMAM"), None)
         return khammam_edition
     else:
         print("Failed to fetch district editions")
         return []
 
+@cache.memoize(timeout=86400)  # Cache for one day
 def get_editions(date):
     # Get the main editions
     url = f"https://epaper.eenadu.net/Login/GetMailEditionPages?Date={date}"
