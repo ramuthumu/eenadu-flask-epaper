@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, render_template, request
 from flask_caching import Cache
 import requests
@@ -21,17 +22,83 @@ def clear_cache():
         print("Cache cleared.")
 
 # Schedule cache to be cleared every day at 5 PM and 6 PM
-scheduler.add_job(func=clear_cache, trigger='cron', hour='17,18')
+scheduler.add_job(func=clear_cache, trigger='cron', hour='16,17,18')
 scheduler.start()
 
 # Ensure the scheduler is shut down when the app exits
 atexit.register(lambda: scheduler.shutdown())
+
+eenadu_editions = []
 
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_max_date():
     url = "https://epaper.eenadu.net/Home/GetMaxdateJson"
     response = requests.get(url)
     return response.text.strip('\"')
+
+@cache.memoize(timeout=86400)  # Cache for one day
+def get_andhrajyothy_max_date():
+    url = "https://epaper.andhrajyothy.com/Login/GetMaxDate"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = json.loads(response.text)
+        return data['maxdate']  # Assuming the date format is suitable for your needs
+    else:
+        print("Failed to fetch Andhrajyothy max date")
+        return None
+    
+@cache.memoize(timeout=86400)  # Cache for one day
+def get_andhrajyothy_khammam_edition_id():
+    url = "https://epaper.andhrajyothy.com/Home/GetEditionsForSearch"
+    response = requests.get(url)
+    if response.status_code == 200:
+        editions = response.json()
+        for edition in editions:
+            if edition['EditionDisplayName'].lower() == "khammam":
+                return edition['EditionId']
+        print("Khammam edition not found")
+    else:
+        print("Failed to fetch editions")
+    return None
+
+@cache.memoize(timeout=86400)  # Cache for one day
+def get_andhrajyothy_pages(edition_id, date):
+    # Adjust the date format if necessary
+    formatted_date = datetime.strptime(date, '%d/%m/%Y').strftime('%d/%m/%Y')
+    url = f"https://epaper.andhrajyothy.com/Home/GetAllpages?editionid={edition_id}&editiondate={formatted_date}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        pages = json.loads(response.text)
+        return sorted(pages, key=lambda x: int(x['PageNo']))
+    else:
+        print("Failed to fetch Andhrajyothy pages")
+        return []
+
+def transform_entry(entry):
+    transformed_entry = {
+        'Path': entry['HighResolution'].replace("\\", "/"),  # Adjust the path format
+        'EditionDate': entry['EditionDate'],  # Use the same edition date
+        'EditionName': "Andhara Jyothi " + entry['EditionName'],  # Use the edition name directly
+        'MobEditionName': entry['EditionName'],  # Assuming the same name for mobile edition name
+        'editionID': int(entry['EditionID']),  # Convert EditionID to integer and use it
+        'PageId': entry['PageId'],  # Use the same page ID
+        'Date': entry['EditionDate'].replace("/", "-"),
+        'Source': 'AndhraJyothi' # Adjust date format if necessary
+    }
+    
+    return transformed_entry
+
+
+@cache.memoize(timeout=86400)
+def andhrajyothy_khammam_edition():
+    # Fetch the max date for Andhra Jyothy or use the current date as fallback
+    max_date = get_andhrajyothy_max_date()
+    print(max_date)
+    edition_id = get_andhrajyothy_khammam_edition_id()
+    pages = get_andhrajyothy_pages(edition_id,max_date)
+    edition = transform_entry(pages[0])
+    return edition
+
 
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_pages(date, edition_id):
@@ -64,9 +131,14 @@ def get_editions(date):
         return []
     # Get the district editions
     khammam_edition = get_khammam_district_editions(date)
+    aj_khammam_edition = andhrajyothy_khammam_edition()
     # If Khammam edition is found, add it to the main editions list
     if khammam_edition:
         editions.append(khammam_edition)
+    global eenadu_editions
+    eenadu_editions = [edition['editionID'] for edition in editions]  # Store only the editionID
+    if aj_khammam_edition:
+        editions.append(aj_khammam_edition)
     return editions
 
 @app.route('/', methods=['GET'])
@@ -78,7 +150,10 @@ def landing():
 @app.route('/edition/<int:edition_id>', methods=['GET', 'POST'])
 def edition(edition_id):
     max_date = get_max_date()
-    pages = get_pages(max_date, edition_id)
+    if edition_id in eenadu_editions:
+        pages = get_pages(max_date, edition_id)
+    else:
+        pages = get_andhrajyothy_pages(edition_id, max_date)
     if not pages:
         return "No pages found."
     current_page_index = 0
