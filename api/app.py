@@ -13,6 +13,9 @@ app.config['CACHE_TYPE'] = 'SimpleCache'  # Simple in-memory cache, suitable for
 cache = Cache(app)
 cache.init_app(app)
 
+
+all_editions = {}
+
 # Configure APScheduler
 scheduler = BackgroundScheduler()
 
@@ -46,6 +49,35 @@ def get_andhrajyothy_max_date():
     else:
         print("Failed to fetch Andhrajyothy max date")
         return None
+
+@cache.memoize(timeout=86400)  # Cache for one day
+def get_vaartha_max_date():
+    url = "https://epaper.vaartha.com/Login/GetMaxDate"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = json.loads(response.text)
+        return data['maxdate']  # Assuming the date format is suitable for your needs
+    else:
+        print("Failed to fetch Andhrajyothy max date")
+        return None
+    
+
+@cache.memoize(timeout=86400)  # Cache for one day
+def get_vaartha_edition_id(target_edition = "Khammam"):
+    url = "https://epaper.vaartha.com/Home/GetEditionsHierarchy"
+    response = requests.get(url)
+    if response.status_code == 200:
+        json_response = response.json()
+        
+        for entry in json_response:
+            if "editionlocation" in entry:
+                for edition in entry["editionlocation"]:
+                    if "Editionlocation" in edition and edition["Editionlocation"] == target_edition:
+                        return edition.get("EditionId")
+        return None
+    else:
+        print(f"Error: Unable to fetch data from the URL. Status code: {response.status_code}")
+        return None
     
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_andhrajyothy_khammam_edition_id():
@@ -60,6 +92,29 @@ def get_andhrajyothy_khammam_edition_id():
     else:
         print("Failed to fetch editions")
     return None
+
+@cache.memoize(timeout=86400)  # Cache for one day
+def get_vaartha_pages(edition_id, date):
+    # Adjust the date format if necessary
+    formatted_date = datetime.strptime(date, '%d/%m/%Y').strftime('%d/%m/%Y')
+    url = f"https://epaper.vaartha.com/Home/GetAllpages?editionid={edition_id}&editiondate={formatted_date}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        pages = json.loads(response.text)
+        return sorted(pages, key=lambda x: int(x['PageNo']))
+    else:
+        print("Failed to fetch Andhrajyothy pages")
+        return []
+    
+@cache.memoize(timeout=86400)
+def vaartha_khammam_edition():
+    # Fetch the max date for Andhra Jyothy or use the current date as fallback
+    max_date = get_vaartha_max_date()
+    print(max_date)
+    edition_id = get_vaartha_edition_id()
+    pages = get_vaartha_pages(edition_id,max_date)
+    edition = transform_entry(pages[0])
+    return edition
 
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_andhrajyothy_pages(edition_id, date):
@@ -129,16 +184,29 @@ def get_editions(date):
     else:
         print("Failed to fetch main editions")
         return []
+
     # Get the district editions
     khammam_edition = get_khammam_district_editions(date)
     aj_khammam_edition = andhrajyothy_khammam_edition()
+    v_khammam_edition = vaartha_khammam_edition()
+
     # If Khammam edition is found, add it to the main editions list
     if khammam_edition:
         editions.append(khammam_edition)
-    global eenadu_editions
+
     eenadu_editions = [edition['editionID'] for edition in editions]  # Store only the editionID
+
+    global all_editions
+    all_editions = {'eenadu': eenadu_editions}
+    
+
     if aj_khammam_edition:
+        all_editions['andhrajyothy'] = aj_khammam_edition['editionID']
         editions.append(aj_khammam_edition)
+
+    if v_khammam_edition:
+        all_editions['vaartha'] = v_khammam_edition['editionID']
+        editions.append(v_khammam_edition)
     return editions
 
 @app.route('/', methods=['GET'])
@@ -150,10 +218,12 @@ def landing():
 @app.route('/edition/<int:edition_id>', methods=['GET', 'POST'])
 def edition(edition_id):
     max_date = get_max_date()
-    if edition_id in eenadu_editions:
+    if edition_id in all_editions['eenadu']:
         pages = get_pages(max_date, edition_id)
-    else:
+    elif edition_id == all_editions['andhrajyothy']:
         pages = get_andhrajyothy_pages(edition_id, max_date)
+    elif edition_id == all_editions['vaartha']:
+        pages = get_vaartha_pages(edition_id, max_date)
     if not pages:
         return "No pages found."
     current_page_index = 0
