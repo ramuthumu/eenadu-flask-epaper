@@ -218,6 +218,8 @@ def landing():
 @app.route('/edition/<int:edition_id>', methods=['GET', 'POST'])
 def edition(edition_id):
     max_date = get_max_date()
+    if not all_editions:
+        get_editions(max_date)
     if edition_id in all_editions['eenadu']:
         pages = get_pages(max_date, edition_id)
     elif edition_id == all_editions['andhrajyothy']:
