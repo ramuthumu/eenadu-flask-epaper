@@ -5,23 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eenadu ePaper Viewer - Select Edition</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: cornflowerblue;
+        }
+
         .container {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
+            padding: 10px;
         }
+
         .edition {
             margin: 10px;
             text-align: center;
+            width: 100%; /* Full width on small screens */
+            max-width: 300px; /* Limit width on larger screens */
         }
+
         .edition img {
             width: 100%;
             height: auto;
+            object-fit: cover; /* Maintain aspect ratio and cover the container */
         }
-        h1 {
-            text-align: center;
-            color: cornflowerblue;
+
+        @media screen and (min-width: 600px) {
+            /* Adjust styles for screens wider than 600px */
+            .edition {
+                width: 48%; /* Two items per row */
+            }
+        }
+
+        @media screen and (min-width: 900px) {
+            /* Adjust styles for screens wider than 900px */
+            .edition {
+                width: 31%; /* Three items per row */
+            }
         }
     </style>
 </head>

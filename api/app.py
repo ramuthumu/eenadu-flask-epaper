@@ -113,7 +113,7 @@ def vaartha_khammam_edition():
     print(max_date)
     edition_id = get_vaartha_edition_id()
     pages = get_vaartha_pages(edition_id,max_date)
-    edition = transform_entry(pages[0])
+    edition = transform_entry(pages[0], 'Vaartha')
     return edition
 
 @cache.memoize(timeout=86400)  # Cache for one day
@@ -129,16 +129,16 @@ def get_andhrajyothy_pages(edition_id, date):
         print("Failed to fetch Andhrajyothy pages")
         return []
 
-def transform_entry(entry):
+def transform_entry(entry, papername):
     transformed_entry = {
         'Path': entry['HighResolution'].replace("\\", "/"),  # Adjust the path format
         'EditionDate': entry['EditionDate'],  # Use the same edition date
-        'EditionName': "Andhara Jyothi " + entry['EditionName'],  # Use the edition name directly
+        'EditionName': papername + ' ' + entry['EditionName'],  # Use the edition name directly
         'MobEditionName': entry['EditionName'],  # Assuming the same name for mobile edition name
         'editionID': int(entry['EditionID']),  # Convert EditionID to integer and use it
         'PageId': entry['PageId'],  # Use the same page ID
         'Date': entry['EditionDate'].replace("/", "-"),
-        'Source': 'AndhraJyothi' # Adjust date format if necessary
+        'Source': papername # Adjust date format if necessary
     }
     
     return transformed_entry
@@ -151,7 +151,7 @@ def andhrajyothy_khammam_edition():
     print(max_date)
     edition_id = get_andhrajyothy_khammam_edition_id()
     pages = get_andhrajyothy_pages(edition_id,max_date)
-    edition = transform_entry(pages[0])
+    edition = transform_entry(pages[0], "Andhra Jyothi")
     return edition
 
 
