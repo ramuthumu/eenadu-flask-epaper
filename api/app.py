@@ -116,6 +116,26 @@ def vaartha_khammam_edition():
     edition = transform_entry(pages[0], 'Vaartha')
     return edition
 
+@cache.memoize(timeout=86400)
+def vaartha_khammam_zilla_edition():
+    # Fetch the max date for Andhra Jyothy or use the current date as fallback
+    max_date = get_vaartha_max_date()
+    print(max_date)
+    edition_id = str(int(get_vaartha_edition_id())+1)
+    pages = get_vaartha_pages(edition_id,max_date)
+    edition = transform_entry(pages[0], 'Vaartha')
+    return edition
+
+@cache.memoize(timeout=86400)
+def aj_khammam_zilla_edition():
+    # Fetch the max date for Andhra Jyothy or use the current date as fallback
+    max_date = get_vaartha_max_date()
+    print(max_date)
+    edition_id = str(int(get_andhrajyothy_khammam_edition_id())+1)
+    pages = get_andhrajyothy_pages(edition_id,max_date)
+    edition = transform_entry(pages[0], "Andhra Jyothi")
+    return edition
+
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_andhrajyothy_pages(edition_id, date):
     # Adjust the date format if necessary
@@ -190,6 +210,10 @@ def get_editions(date):
     aj_khammam_edition = andhrajyothy_khammam_edition()
     v_khammam_edition = vaartha_khammam_edition()
 
+    v_khammam_zilla_edition = vaartha_khammam_zilla_edition()
+
+    a_khammam_zilla_edition = aj_khammam_zilla_edition()
+
     # If Khammam edition is found, add it to the main editions list
     if khammam_edition:
         editions.append(khammam_edition)
@@ -201,12 +225,14 @@ def get_editions(date):
     
 
     if aj_khammam_edition:
-        all_editions['andhrajyothy'] = aj_khammam_edition['editionID']
+        all_editions['andhrajyothy'] = [aj_khammam_edition['editionID'], a_khammam_zilla_edition['editionID']]
         editions.append(aj_khammam_edition)
+        editions.append(a_khammam_zilla_edition)
 
     if v_khammam_edition:
-        all_editions['vaartha'] = v_khammam_edition['editionID']
+        all_editions['vaartha'] = [v_khammam_edition['editionID'], v_khammam_zilla_edition['editionID']]
         editions.append(v_khammam_edition)
+        editions.append(v_khammam_zilla_edition)
     return editions
 
 @app.route('/', methods=['GET'])
@@ -222,9 +248,9 @@ def edition(edition_id):
         get_editions(max_date)
     if edition_id in all_editions['eenadu']:
         pages = get_pages(max_date, edition_id)
-    elif edition_id == all_editions['andhrajyothy']:
+    elif edition_id in all_editions['andhrajyothy']:
         pages = get_andhrajyothy_pages(edition_id, max_date)
-    elif edition_id == all_editions['vaartha']:
+    elif edition_id in all_editions['vaartha']:
         pages = get_vaartha_pages(edition_id, max_date)
     if not pages:
         return "No pages found."
