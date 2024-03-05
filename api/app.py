@@ -162,23 +162,15 @@ def get_editions(date):
     if khammam_edition:
         editions.append(khammam_edition)
 
-    eenadu_editions = [edition['editionID'] for edition in editions]  # Store only the editionID
-
-    global all_editions
-    all_editions = {'eenadu': eenadu_editions}
-
     if aj_khammam_edition:
-        all_editions['andhrajyothy'] = [aj_khammam_edition['editionID'], a_khammam_zilla_edition['editionID']]
         editions.append(aj_khammam_edition)
         editions.append(a_khammam_zilla_edition)
 
     if v_khammam_edition:
-        all_editions['vaartha'] = [v_khammam_edition['editionID'], v_khammam_zilla_edition['editionID']]
         editions.append(v_khammam_edition)
         editions.append(v_khammam_zilla_edition)
     
     if aprabha_khammam_edition:
-        all_editions['prabhanews'] = [aprabha_khammam_edition['editionID']+'apb',aprabha_telangana_edition['editionID']+'apb']
         editions.append(aprabha_khammam_edition)
         editions.append(aprabha_telangana_edition)
     
@@ -190,20 +182,15 @@ def landing():
     editions = get_editions(max_date)
     return render_template('landing.html', editions=editions)
 
-@app.route('/edition/<int:edition_id>', methods=['GET', 'POST'])
-def edition(edition_id):
+@app.route('/edition/<string:edition_name>/<int:edition_id>', methods=['GET', 'POST'])
+def edition(edition_name,edition_id):
     max_date = get_max_date_json()
     if not all_editions:
         get_editions(max_date)
-    if edition_id in all_editions['eenadu']:
+    if edition_name == 'eenadu':
         pages = get_eenadu_pages(max_date, edition_id)
-    elif edition_id in all_editions['andhrajyothy']:
-        pages = get_pages(name="andhrajyothy",edition_id=edition_id, max_date=get_max_date(name="andhrajyothy"))
-    elif edition_id in all_editions['vaartha']:
-        pages = get_pages(name='vaartha',edition_id=edition_id, max_date=get_max_date("vaartha"))
-    elif edition_id in all_editions['prabhanews']:
-        edition_id = edition_id.replace('apb','')
-        pages = get_pages(name='prabhanews',edition_id=edition_id, max_date=get_max_date("prabhanews"))
+    else:
+        pages = get_pages(name=edition_name,edition_id=edition_id, max_date=get_max_date(name=edition_name))
     if not pages:
         return "No pages found."
     current_page_index = 0

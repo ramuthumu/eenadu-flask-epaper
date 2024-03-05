@@ -58,7 +58,7 @@
 <div class="container">
     {% for edition in editions %}
         <div class="edition">
-            <a href="/edition/{{ edition.editionID }}">
+            <a href="/edition/{{ edition.Source }}/{{ edition.editionID }}">
                 <img src="{{ edition.Path }}" alt="{{ edition.EditionName }}">
                 <h3>{{ edition.EditionName }}</h3>
             </a>
