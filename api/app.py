@@ -131,6 +131,7 @@ def get_eenadu_khammam_district_editions(date):
     if response.status_code == 200:
         district_editions = json.loads(response.text)
         khammam_edition = next((edition for edition in district_editions if edition["EditionName"] == "KHAMMAM"), None)
+        khammam_edition['Source'] = 'eenadu'
         return khammam_edition
     else:
         print("Failed to fetch district editions")
@@ -143,6 +144,8 @@ def get_editions(date):
     response = requests.get(url)
     if response.status_code == 200:
         editions = json.loads(response.text)
+        for edition in editions:
+            edition['Source'] = 'eenadu'
     else:
         print("Failed to fetch main editions")
         return []
