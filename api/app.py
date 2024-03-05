@@ -51,26 +51,23 @@ def get_max_date_from_url(url, json_key=None):
         return None
 
 # Usage examples
-def get_max_date():
+def get_max_date_json():
     return get_max_date_from_url("https://epaper.eenadu.net/Home/GetMaxdateJson")
 
-def get_andhrajyothy_max_date():
-    return get_max_date_from_url("https://epaper.andhrajyothy.com/Login/GetMaxDate", "maxdate")
-
-def get_vaartha_max_date():
-    return get_max_date_from_url("https://epaper.vaartha.com/Login/GetMaxDate", "maxdate")
+def get_max_date(name):
+    return get_max_date_from_url(f"https://epaper.{name}.com/Login/GetMaxDate", "maxdate")
 
 @cache.memoize(timeout=86400)  # Cache for one day
-def get_edition_id(name, target_edition = "Khammam"):
+def get_edition_id(name, target_edition="Khammam"):
     url = f"https://epaper.{name}.com/Home/GetEditionsHierarchy"
     response = requests.get(url)
     if response.status_code == 200:
         json_response = response.json()
-        
+
         for entry in json_response:
             if "editionlocation" in entry:
                 for edition in entry["editionlocation"]:
-                    if "Editionlocation" in edition and edition["Editionlocation"] == target_edition:
+                    if "Editionlocation" in edition and edition["Editionlocation"].strip() == target_edition:
                         return edition.get("EditionId")
         return None
     else:
@@ -78,14 +75,15 @@ def get_edition_id(name, target_edition = "Khammam"):
         return None
     
 @cache.memoize(timeout=86400)
-def get_khammam_edition(name,supplement=None):
+def get_khammam_edition(name,supplement=None, target_edition='Khammam'):
     # Fetch the max date for Andhra Jyothy or use the current date as fallback
-    max_date = get_vaartha_max_date()
+    max_date = get_max_date(name=name)
     print(max_date)
     if supplement:
         edition_id = str(int(get_edition_id(name=name))+1)
     else:
-        edition_id = get_edition_id(name=name)
+        edition_id = get_edition_id(name=name,target_edition=target_edition)
+    print(name, edition_id, target_edition)
     pages = pages =  get_pages(name=name,edition_id=edition_id,max_date=max_date)
     edition = transform_entry(pages[0], name)
     return edition
@@ -151,9 +149,11 @@ def get_editions(date):
 
     # Get the district editions
     khammam_edition = get_eenadu_khammam_district_editions(date)
-    aj_khammam_edition = get_khammam_edition(name='andhrajyothy')
-    v_khammam_edition = get_khammam_edition(name='vaartha')
-    aprabha_khammam_edition = get_khammam_edition(name='prabhanews')
+    aj_khammam_edition = get_khammam_edition(name='andhrajyothy',target_edition="Khammam")
+    v_khammam_edition = get_khammam_edition(name='vaartha',target_edition="Khammam")
+
+    aprabha_khammam_edition = get_khammam_edition(name='prabhanews',target_edition="Khammam")
+    aprabha_telangana_edition = get_khammam_edition(name='prabhanews',target_edition='Telangana')
 
     v_khammam_zilla_edition = get_khammam_edition(name='vaartha',supplement=True)
     a_khammam_zilla_edition = get_khammam_edition(name='andhrajyothy',supplement=True)
@@ -178,30 +178,31 @@ def get_editions(date):
         editions.append(v_khammam_zilla_edition)
     
     if aprabha_khammam_edition:
-        all_editions['prabhanews'] = [aprabha_khammam_edition['editionID']]
+        all_editions['prabhanews'] = [aprabha_khammam_edition['editionID'],aprabha_telangana_edition['editionID']]
         editions.append(aprabha_khammam_edition)
+        editions.append(aprabha_telangana_edition)
     
     return editions
 
 @app.route('/', methods=['GET'])
 def landing():
-    max_date = get_max_date()
+    max_date = get_max_date_json()
     editions = get_editions(max_date)
     return render_template('landing.html', editions=editions)
 
 @app.route('/edition/<int:edition_id>', methods=['GET', 'POST'])
 def edition(edition_id):
-    max_date = get_max_date()
+    max_date = get_max_date_json()
     if not all_editions:
         get_editions(max_date)
     if edition_id in all_editions['eenadu']:
         pages = get_eenadu_pages(max_date, edition_id)
     elif edition_id in all_editions['andhrajyothy']:
-        pages = get_pages(name="andhrajyothy",edition_id=edition_id, max_date=max_date)
+        pages = get_pages(name="andhrajyothy",edition_id=edition_id, max_date=get_max_date(name="andhrajyothy"))
     elif edition_id in all_editions['vaartha']:
-        pages = get_pages(name='vaartha',edition_id=edition_id, max_date=max_date)
+        pages = get_pages(name='vaartha',edition_id=edition_id, max_date=get_max_date("vaartha"))
     elif edition_id in all_editions['prabhanews']:
-        pages = get_pages(name='prabhanews',edition_id=edition_id, max_date=max_date)
+        pages = get_pages(name='prabhanews',edition_id=edition_id, max_date=get_max_date("prabhanews"))
     if not pages:
         return "No pages found."
     current_page_index = 0
