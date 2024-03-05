@@ -178,7 +178,7 @@ def get_editions(date):
         editions.append(v_khammam_zilla_edition)
     
     if aprabha_khammam_edition:
-        all_editions['prabhanews'] = [aprabha_khammam_edition['editionID'],aprabha_telangana_edition['editionID']]
+        all_editions['prabhanews'] = [aprabha_khammam_edition['editionID']+'apb',aprabha_telangana_edition['editionID']+'apb']
         editions.append(aprabha_khammam_edition)
         editions.append(aprabha_telangana_edition)
     
@@ -202,6 +202,7 @@ def edition(edition_id):
     elif edition_id in all_editions['vaartha']:
         pages = get_pages(name='vaartha',edition_id=edition_id, max_date=get_max_date("vaartha"))
     elif edition_id in all_editions['prabhanews']:
+        edition_id = edition_id.replace('apb','')
         pages = get_pages(name='prabhanews',edition_id=edition_id, max_date=get_max_date("prabhanews"))
     if not pages:
         return "No pages found."
