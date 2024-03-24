@@ -75,18 +75,22 @@ def get_edition_id(name, target_edition="Khammam"):
         return None
     
 @cache.memoize(timeout=86400)
-def get_khammam_edition(name,supplement=None, target_edition='Khammam'):
-    # Fetch the max date for Andhra Jyothy or use the current date as fallback
-    max_date = get_max_date(name=name)
-    print(max_date)
-    if supplement:
-        edition_id = str(int(get_edition_id(name=name))+1)
-    else:
-        edition_id = get_edition_id(name=name,target_edition=target_edition)
-    print(name, edition_id, target_edition)
-    pages = pages =  get_pages(name=name,edition_id=edition_id,max_date=max_date)
-    edition = transform_entry(pages[0], name)
-    return edition
+def get_khammam_edition(name, supplement=None, target_edition='Khammam'):
+    try:
+        # Fetch the max date for Andhra Jyothy or use the current date as fallback
+        max_date = get_max_date(name=name)
+        print(max_date)
+        if supplement:
+            edition_id = str(int(get_edition_id(name=name)) + 1)
+        else:
+            edition_id = get_edition_id(name=name, target_edition=target_edition)
+        print(name, edition_id, target_edition)
+        pages = get_pages(name=name, edition_id=edition_id, max_date=max_date)
+        edition = transform_entry(pages[0], name)
+        return edition
+    except Exception as e:
+        print(f"Error occurred while fetching {name} edition: {e}")
+        return None
 
 
 @cache.memoize(timeout=86400)  # Cache for one day
