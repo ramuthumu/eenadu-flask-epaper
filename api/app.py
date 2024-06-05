@@ -65,7 +65,7 @@ def get_max_date(name):
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_edition_id(name, target_edition="Khammam"):
     url = f"https://epaper.{name}.com/Home/GetEditionsHierarchy"
-    response = requests.get(url)
+    response = requests.get(url,timeout=10)
     if response.status_code == 200:
         json_response = response.json()
 
@@ -104,7 +104,7 @@ def get_pages(name, edition_id, max_date):
     # Adjust the date format if necessary
     formatted_date = datetime.strptime(max_date, '%d/%m/%Y').strftime('%d/%m/%Y')
     url = f"https://epaper.{name}.com/Home/GetAllpages?editionid={edition_id}&editiondate={formatted_date}"
-    response = requests.get(url)
+    response = requests.get(url,timeout=10)
     if response.status_code == 200:
         pages = json.loads(response.text)
         return sorted(pages, key=lambda x: int(x['PageNo']))
@@ -131,7 +131,7 @@ def transform_entry(entry, papername):
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_eenadu_pages(date, edition_id):
     url = f"https://epaper.eenadu.net/Home/GetAllpages?editionid={edition_id}&editiondate={date}&IsMag=0"
-    response = requests.get(url)
+    response = requests.get(url,timeout=10)
     pages = json.loads(response.text)
     return sorted(pages, key=lambda x: int(x['PageNo']))
 
@@ -139,7 +139,7 @@ def get_eenadu_pages(date, edition_id):
 @cache.memoize(timeout=86400)  # Cache for one day
 def get_eenadu_khammam_district_editions(date):
     url = f"https://epaper.eenadu.net/Login/GetDistrictEditionPages?DistrictEditionId=1&Date={date}"
-    response = requests.get(url)
+    response = requests.get(url,timeout=10)
     if response.status_code == 200:
         district_editions = json.loads(response.text)
         khammam_edition = next((edition for edition in district_editions if edition["EditionName"] == "KHAMMAM"), None)
@@ -154,7 +154,7 @@ def get_eenadu_khammam_district_editions(date):
 def get_editions(date):
     # Get the main editions
     url = f"https://epaper.eenadu.net/Login/GetMailEditionPages?Date={date}"
-    response = requests.get(url)
+    response = requests.get(url,timeout=10)
     if response.status_code == 200:
         editions = json.loads(response.text)
         for edition in editions:
