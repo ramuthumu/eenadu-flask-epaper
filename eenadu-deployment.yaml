@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eenadu-deployment
+spec:
+  selector:
+    matchLabels:
+      app: eenadu-app
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: eenadu-app
+    spec:
+      containers:
+      - name: eenadu-app
+        image: ramuthumu/eenadu-epaper:1.0.1
+        ports:
+        - containerPort: 5000
