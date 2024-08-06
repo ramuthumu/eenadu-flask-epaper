@@ -8,6 +8,18 @@ import atexit
 
 app = Flask(__name__)
 
+headers = {
+    'accept': 'application/json, text/javascript, */*; q=0.01',
+    'accept-language': 'en-US,en;q=0.9',
+    'cache-control': 'no-cache',
+    'content-type': 'application/json; charset=utf-8',
+    'pragma': 'no-cache',
+    'priority': 'u=1, i',
+    'referer': 'https://epaper.eenadu.net/',
+    'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+    'x-requested-with': 'XMLHttpRequest'
+}
+
 # Configure cache
 app.config['CACHE_TYPE'] = 'SimpleCache'  # Simple in-memory cache, suitable for single-state apps
 cache = Cache(app)
@@ -17,7 +29,6 @@ all_editions = {}
 
 # Configure APScheduler
 scheduler = BackgroundScheduler()
-
 
 def clear_cache():
     with app.app_context():
